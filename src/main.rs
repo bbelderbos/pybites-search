@@ -6,7 +6,7 @@ use std::env;
 use std::time::Duration;
 
 const TIMEOUT: u64 = 10;
-const ENDPOINT: &str = "http://localhost:8000/api/content";
+const ENDPOINT: &str = "https://codechalleng.es/api/content/";
 
 #[derive(Deserialize, Debug, Clone)]
 struct Item {
