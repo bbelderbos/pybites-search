@@ -1,9 +1,9 @@
 [package]
 name = "pybites-search"
 version = "0.1.0"
-authors = ["Your Name <you@example.com>"]
+authors = ["Bob Belderbos <bob@pybit.es>"]
 edition = "2021"
-description = "A command-line search tool for various PyBites endpoints"
+description = "A command-line search tool for Pybites content"
 license = "MIT"
 
 [dependencies]
