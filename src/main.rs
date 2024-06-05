@@ -32,7 +32,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let content_type = if args.len() >= 3 && !args[2].starts_with("--") { Some(&args[2]) } else { None };
     let title_only = args.contains(&"--title-only".to_string());
 
-    // Get cache duration from environment variable or use default
     let cache_duration = env::var("CACHE_DURATION")
         .ok()
         .and_then(|v| v.parse().ok())
@@ -46,7 +45,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
-    // Attempt to load from cache
     if let Ok(items) = load_from_cache(cache_duration) {
         return Ok(items);
     }
