@@ -10,7 +10,8 @@ use dirs::home_dir;
 const TIMEOUT: u64 = 10;
 const ENDPOINT: &str = "https://codechalleng.es/api/content/";
 const CACHE_FILE_NAME: &str = ".pybites-search-cache.json";
-const DEFAULT_CACHE_DURATION: u64 = 3600; // Default cache duration in seconds (1 hour)
+const DEFAULT_CACHE_DURATION: u64 = 86400; // Cache API response for 1 day
+
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Item {
