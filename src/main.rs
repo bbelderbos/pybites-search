@@ -105,11 +105,12 @@ fn search_items(items: &[Item], search_term: &str, content_type: Option<&str>, t
             re.is_match(&item.title) || re.is_match(&item.summary)
         };
         if content_type.map_or(true, |t| t.eq_ignore_ascii_case(&item.content_type)) && matches {
-            if content_type.is_none() {
-                println!("Type: {}", item.content_type);
-            }
-            println!("Title: {}", item.title);
-            println!("Link: {}\n", item.link);
+            let content_type_prefix: String = if content_type.is_none() {
+                format!("[{}] ", item.content_type)
+            } else {
+                "".to_string()
+            };
+            println!("{}{}\n{}\n", content_type_prefix, item.title, item.link);
         }
     }
 }
