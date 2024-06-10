@@ -67,7 +67,8 @@ async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>,
         return Ok(items);
     }
 
-    // Fetch from API
+    println!("{}", "Cache expired, fetching latest data from API ...".yellow());
+
     let client = reqwest::Client::new();
     let response = client
         .get(&endpoint)
@@ -103,7 +104,6 @@ fn load_from_cache(cache_duration: u64) -> Result<Vec<Item>, Box<dyn std::error:
     if current_time - cache_data.timestamp <= cache_duration {
         Ok(cache_data.items)
     } else {
-        println!("Cache expired, fetching latest data...");
         Err("Cache expired".into())
     }
 }
