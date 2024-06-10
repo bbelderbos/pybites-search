@@ -1,7 +1,8 @@
-use reqwest;
 use serde::{Deserialize, Serialize};
 use regex::Regex;
 use std::env;
+use clap::{Parser, CommandFactory};
+use colored::*;
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -21,17 +22,33 @@ struct Item {
     link: String,
 }
 
+
+#[derive(Parser)]
+#[command(name = "psearch", version, about)]
+struct Cli {
+    search_terms: Vec<String>,
+
+    #[arg(short = 'c', long = "content-type")]
+    content_type: Option<String>,
+
+    #[arg(short = 't', long = "title-only")]
+    title_only: bool,
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 || args.len() > 4 {
-        eprintln!("Usage: search <search_term> [<content_type>] [--title-only]");
-        return Ok(());
+    let cli = Cli::parse();
+
+    if cli.search_terms.is_empty() {
+        eprintln!("{}", "Error: At least one search term should be given.".red());
+        Cli::command().print_help()?;
+        std::process::exit(1);
     }
 
-    let search_term = &args[1];
-    let content_type = if args.len() >= 3 && !args[2].starts_with("--") { Some(&args[2]) } else { None };
-    let title_only = args.contains(&"--title-only".to_string());
+    let search_term = cli.search_terms.iter().map(|term| regex::escape(term)).collect::<Vec<_>>().join(".*");
+    let content_type = cli.content_type.as_deref();
+    let title_only = cli.title_only;
 
     let cache_duration = env::var("CACHE_DURATION")
         .ok()
@@ -40,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let items = fetch_items(ENDPOINT.to_string(), cache_duration).await?;
 
-    search_items(&items, search_term, content_type.map(String::as_str), title_only);
+    search_items(&items, &search_term, content_type, title_only);
 
     Ok(())
 }
@@ -86,6 +103,7 @@ fn load_from_cache(cache_duration: u64) -> Result<Vec<Item>, Box<dyn std::error:
     if current_time - cache_data.timestamp <= cache_duration {
         Ok(cache_data.items)
     } else {
+        println!("Cache expired, fetching latest data...");
         Err("Cache expired".into())
     }
 }
@@ -97,7 +115,7 @@ struct CacheData {
 }
 
 fn search_items(items: &[Item], search_term: &str, content_type: Option<&str>, title_only: bool) {
-    let re = Regex::new(&format!("(?i){}", regex::escape(search_term))).unwrap();
+    let re = Regex::new(&format!("(?i){}", search_term)).unwrap();
 
     for item in items {
         let matches = if title_only {
