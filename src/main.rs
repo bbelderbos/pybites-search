@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::env;
-use clap::{Parser, CommandFactory};
+use clap::{CommandFactory, Parser};
 use colored::*;
+use dirs::home_dir;
+use phf::phf_map;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use dirs::home_dir;
-use phf::phf_map;
 
 const TIMEOUT: u64 = 10;
 const ENDPOINT: &str = "https://codechalleng.es/api/content/";
@@ -30,7 +30,6 @@ struct Item {
     link: String,
 }
 
-
 #[derive(Parser)]
 #[command(name = "psearch", version, about)]
 struct Cli {
@@ -43,18 +42,25 @@ struct Cli {
     title_only: bool,
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     if cli.search_terms.is_empty() {
-        eprintln!("{}", "Error: At least one search term should be given.".red());
+        eprintln!(
+            "{}",
+            "Error: At least one search term should be given.".red()
+        );
         Cli::command().print_help()?;
         std::process::exit(1);
     }
 
-    let search_term = cli.search_terms.iter().map(|term| regex::escape(term)).collect::<Vec<_>>().join(".*");
+    let search_term = cli
+        .search_terms
+        .iter()
+        .map(|term| regex::escape(term))
+        .collect::<Vec<_>>()
+        .join(".*");
 
     let ct = cli.content_type.as_deref();
     let content_type = match ct {
@@ -65,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 eprintln!("Error: Invalid content type '{}'", ct);
                 std::process::exit(1);
             }
-        },
+        }
         None => None,
     };
 
@@ -83,12 +89,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
+async fn fetch_items(
+    endpoint: String,
+    cache_duration: u64,
+) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
     if let Ok(items) = load_from_cache(cache_duration) {
         return Ok(items);
     }
 
-    println!("{}", "Cache expired, fetching latest data from API ...".yellow());
+    println!(
+        "{}",
+        "Cache expired, fetching latest data from API ...".yellow()
+    );
 
     let client = reqwest::Client::new();
     let response = client
