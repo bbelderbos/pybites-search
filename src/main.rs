@@ -105,11 +105,11 @@ async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>,
     Ok(response)
 }
 
-fn save_to_cache(items: &Vec<Item>) -> Result<(), Box<dyn std::error::Error>> {
+fn save_to_cache(items: &[Item]) -> Result<(), Box<dyn std::error::Error>> {
     let cache_path = get_cache_file_path();
     let cache_data = CacheData {
         timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
-        items: items.clone(),
+        items: items.to_vec(),
     };
     let serialized = serde_json::to_string(&cache_data)?;
     fs::write(cache_path, serialized)?;
