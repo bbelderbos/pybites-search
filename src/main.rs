@@ -7,12 +7,20 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use dirs::home_dir;
+use phf::phf_map;
 
 const TIMEOUT: u64 = 10;
 const ENDPOINT: &str = "https://codechalleng.es/api/content/";
 const CACHE_FILE_NAME: &str = ".pybites-search-cache.json";
 const DEFAULT_CACHE_DURATION: u64 = 86400; // Cache API response for 1 day
 
+static CATEGORY_MAPPING: phf::Map<&'static str, &'static str> = phf_map! {
+    "a" => "article",
+    "b" => "bite",
+    "p" => "podcast",
+    "v" => "video",
+    "t" => "tip",
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Item {
@@ -47,7 +55,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let search_term = cli.search_terms.iter().map(|term| regex::escape(term)).collect::<Vec<_>>().join(".*");
-    let content_type = cli.content_type.as_deref();
+
+    let ct = cli.content_type.as_deref();
+    let content_type = match ct {
+        Some(ct) => {
+            if CATEGORY_MAPPING.get(ct).is_some() || CATEGORY_MAPPING.values().any(|&v| v == ct) {
+                CATEGORY_MAPPING.get(ct).cloned().or(Some(ct))
+            } else {
+                eprintln!("Error: Invalid content type '{}'", ct);
+                std::process::exit(1);
+            }
+        },
+        None => None,
+    };
+
     let title_only = cli.title_only;
 
     let cache_duration = env::var("CACHE_DURATION")
