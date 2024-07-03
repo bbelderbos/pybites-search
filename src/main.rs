@@ -68,7 +68,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if CATEGORY_MAPPING.get(ct).is_some() || CATEGORY_MAPPING.values().any(|&v| v == ct) {
                 CATEGORY_MAPPING.get(ct).cloned().or(Some(ct))
             } else {
-                eprintln!("Error: Invalid content type '{}'", ct);
+                let valid_options: Vec<String> = CATEGORY_MAPPING
+                    .entries()
+                    .map(|(key, value)| format!("{} ({})", key, value))
+                    .collect();
+                eprintln!(
+                    "Error: Invalid content type '{}'. Valid options are: {}",
+                    ct,
+                    valid_options.join(", ")
+                );
                 std::process::exit(1);
             }
         }
