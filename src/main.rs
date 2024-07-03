@@ -1,18 +1,17 @@
-use serde::{Deserialize, Serialize};
-use regex::Regex;
-use std::env;
-use clap::{Parser, CommandFactory};
+use clap::{CommandFactory, Parser};
 use colored::*;
+use dirs::home_dir;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use dirs::home_dir;
 
 const TIMEOUT: u64 = 10;
 const ENDPOINT: &str = "https://codechalleng.es/api/content/";
 const CACHE_FILE_NAME: &str = ".pybites-search-cache.json";
 const DEFAULT_CACHE_DURATION: u64 = 86400; // Cache API response for 1 day
-
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Item {
@@ -21,7 +20,6 @@ struct Item {
     summary: String,
     link: String,
 }
-
 
 #[derive(Parser)]
 #[command(name = "psearch", version, about)]
@@ -35,18 +33,25 @@ struct Cli {
     title_only: bool,
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     if cli.search_terms.is_empty() {
-        eprintln!("{}", "Error: At least one search term should be given.".red());
+        eprintln!(
+            "{}",
+            "Error: At least one search term should be given.".red()
+        );
         Cli::command().print_help()?;
         std::process::exit(1);
     }
 
-    let search_term = cli.search_terms.iter().map(|term| regex::escape(term)).collect::<Vec<_>>().join(".*");
+    let search_term = cli
+        .search_terms
+        .iter()
+        .map(|term| regex::escape(term))
+        .collect::<Vec<_>>()
+        .join(".*");
     let content_type = cli.content_type.as_deref();
     let title_only = cli.title_only;
 
@@ -62,12 +67,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
+async fn fetch_items(
+    endpoint: String,
+    cache_duration: u64,
+) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
     if let Ok(items) = load_from_cache(cache_duration) {
         return Ok(items);
     }
 
-    println!("{}", "Cache expired, fetching latest data from API ...".yellow());
+    println!(
+        "{}",
+        "Cache expired, fetching latest data from API ...".yellow()
+    );
 
     let client = reqwest::Client::new();
     let response = client
@@ -84,11 +95,11 @@ async fn fetch_items(endpoint: String, cache_duration: u64) -> Result<Vec<Item>,
     Ok(response)
 }
 
-fn save_to_cache(items: &Vec<Item>) -> Result<(), Box<dyn std::error::Error>> {
+fn save_to_cache(items: &[Item]) -> Result<(), Box<dyn std::error::Error>> {
     let cache_path = get_cache_file_path();
     let cache_data = CacheData {
         timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
-        items: items.clone(),
+        items: items.to_vec(),
     };
     let serialized = serde_json::to_string(&cache_data)?;
     fs::write(cache_path, serialized)?;
