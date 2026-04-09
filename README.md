@@ -12,7 +12,7 @@ cargo install pybites-search
 
 ```bash
 $ psearch --version
-psearch 0.6.0
+psearch 1.0.0
 
 $ psearch --help
 A command-line search tool for Pybites content
@@ -47,9 +47,3 @@ $ psearch counter -c b -t
 $ psearch transpose data
 ... strings this together into a regex matching "[bite] Transpose a data structure" for example ...
 ```
-
-## Caching
-
-The first call is typically a bit slower, because it downloads/ caches the data into a local file (`~/.pybites-search-cache.json`). From there on, it will use the cache and be really fast.
-
-The cache duration is 24 hours, after which it will download the data again.
